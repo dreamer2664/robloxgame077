@@ -1,0 +1,11 @@
+std = "roblox"
+
+[lints]
+# We deliberately use `_`-prefixed unused params in callbacks.
+unused_variable = "warn"
+multiple_statements = "allow"
+shadowing = "warn"
+
+[config]
+# Generated test tree (see tools/test_build.py)
+exclude = ["tests/.build"]

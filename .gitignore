@@ -1,0 +1,16 @@
+# Build output
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+build/
+sourcemap.json
+# Tool caches
+.venv/
+__pycache__/
+*.pyc
+.rojo/
+# Local renders (regenerate with tools/render)
+tools/render/__pycache__/
+tests/.build/
+sourcemap.json

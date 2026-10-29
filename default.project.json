@@ -1,0 +1,102 @@
+{
+  "name": "echowake",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": { "$path": "src/shared" }
+    },
+
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Server": { "$path": "src/server" }
+    },
+
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "$properties": {
+        "CharacterWalkSpeed": 16,
+        "CharacterJumpPower": 44,
+        "EnableMouseLockOption": false,
+        "CameraMaxZoomDistance": 18,
+        "CameraMinZoomDistance": 6,
+        "AutoJumpEnabled": true
+      },
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "Client": { "$path": "src/client" }
+      }
+    },
+
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": {
+        "Ambient": [0.02, 0.05, 0.09],
+        "OutdoorAmbient": [0.01, 0.03, 0.06],
+        "Brightness": 0.35,
+        "ClockTime": 0.2,
+        "FogColor": [0.008, 0.03, 0.05],
+        "FogStart": 30,
+        "FogEnd": 340,
+        "GlobalShadows": true,
+        "EnvironmentDiffuseScale": 0.15,
+        "EnvironmentSpecularScale": 0.3,
+        "ExposureCompensation": 0.1,
+        "GeographicLatitude": 0,
+        "Technology": "Future"
+      },
+      "Atmosphere": {
+        "$className": "Atmosphere",
+        "$properties": {
+          "Density": 0.42,
+          "Offset": 0.12,
+          "Color": [0.22, 0.46, 0.55],
+          "Decay": [0.09, 0.22, 0.3],
+          "Glare": 0.15,
+          "Haze": 2.4
+        }
+      },
+      "Bloom": {
+        "$className": "BloomEffect",
+        "$properties": { "Intensity": 0.85, "Size": 26, "Threshold": 1.05 }
+      },
+      "ColorGrade": {
+        "$className": "ColorCorrectionEffect",
+        "$properties": {
+          "Brightness": -0.02,
+          "Contrast": 0.16,
+          "Saturation": 0.12,
+          "TintColor": [1, 0.99, 1]
+        }
+      },
+      "DepthOfField": {
+        "$className": "DepthOfFieldEffect",
+        "$properties": { "FarIntensity": 0.12, "FocusDistance": 34, "InFocusRadius": 90, "NearIntensity": 0 }
+      }
+    },
+
+    "Workspace": {
+      "$className": "Workspace",
+      "$properties": {
+        "StreamingEnabled": false,
+        "Gravity": 168,
+        "FilteringEnabled": true
+      },
+      "Terrain": { "$className": "Terrain" }
+    },
+
+    "SoundService": {
+      "$className": "SoundService",
+      "$properties": { "AmbientReverb": "Cave", "DistanceFactor": 3.33, "RolloffScale": 1.4 }
+    },
+
+    "Players": {
+      "$className": "Players",
+      "$properties": {
+        "RespawnTime": 3,
+        "CharacterAutoLoads": false
+      }
+    }
+  }
+}
