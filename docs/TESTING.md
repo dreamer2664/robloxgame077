@@ -16,7 +16,9 @@ under **Not verified** at the bottom — no result in this document is inferred.
 | Python | 3.13 + numpy + Pillow | offline renderer |
 
 Robin notes: the repo does not commit these binaries; `tools/check.sh` and
-`tools/run_tests.sh` read `TOOLS_DIR`.
+`tools/run_tests.sh` read `TOOLS_DIR`. The Roblox selene standard library is also
+generated rather than committed: run `selene generate-roblox-std` once in the repo root
+(CI does this automatically).
 
 ## What runs
 
