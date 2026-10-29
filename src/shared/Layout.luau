@@ -354,6 +354,106 @@ local function buildOuterWalls()
 	end
 end
 
+--[[ Navigation furniture: an inlaid line down the nave plus rune markers at each
+     aisle mouth. In fog this is the difference between exploring and being lost. ]]
+local function buildWayfinding()
+	-- central inlay, broken into tiles so it catches the light unevenly
+	for z = -126, 148, 8 do
+		if (z + 126) % 24 ~= 0 then
+			add("Block", v(0, 0.09, z), v(2.2, 0.22, 5.4), P.CyanDeep, {
+				mat = "Neon",
+				alpha = 0.35,
+				tag = "glow",
+				emissive = 0.5,
+				cast = false,
+			})
+		end
+	end
+	-- aisle mouths
+	type Mouth = { x: number, z: number }
+	local mouths: { Mouth } = {
+		{ x = -NAVE_HALF - 2, z = -84 },
+		{ x = NAVE_HALF + 2, z = -84 },
+		{ x = -NAVE_HALF - 2, z = 24 },
+		{ x = NAVE_HALF + 2, z = 24 },
+	}
+	for _, mouth in mouths do
+		local x, z = mouth.x, mouth.z
+		add("Block", v(x, 2.6, z), v(3.4, 5.2, 12), P.CyanDeep, {
+			mat = "Neon",
+			alpha = 0.45,
+			tag = "glow",
+			emissive = 0.7,
+			cast = false,
+		})
+		add("Block", v(x * 1.06, 5.4, z), v(1.2, 1.2, 13), P.Mint, {
+			mat = "Neon",
+			alpha = 0.2,
+			tag = "accent",
+			emissive = 1,
+			cast = false,
+		})
+	end
+
+	-- light shafts falling through the ruined vault: pure atmosphere, and they
+	-- give the eye a vertical reference in the fog.
+	for index = 0, 5 do
+		local z = -110 + index * 44
+		local x = if index % 2 == 0 then -9 else 11
+		add("Block", v(x, 52, z), v(3.2, 84, 3.2), P.Cyan, {
+			mat = "Glass",
+			alpha = 0.94,
+			tag = "shaft",
+			emissive = 0.55,
+			cast = false,
+		})
+		add("Cylinder", v(x, 1.2, z), v(16, 0.2, 16), P.CyanDeep, {
+			mat = "Neon",
+			alpha = 0.7,
+			tag = "glow",
+			emissive = 0.4,
+			cast = false,
+		})
+	end
+end
+
+local function buildHangingBells()
+	-- Drowned bells, still on their chains. Silhouettes that read at any distance.
+	for index = 0, 3 do
+		local z = -90 + index * 62
+		local x = if index % 2 == 0 then 14 else -14
+		local depth = 52 - index * 3
+		add(
+			"Cylinder",
+			v(x, depth + 30, z),
+			v(0.9, 34, 0.9),
+			P.CoralBoneDim,
+			{ mat = "Metal", tag = "decor", cast = false }
+		)
+		add(
+			"Cylinder",
+			v(x, depth + 8, z),
+			v(13, 18, 13),
+			P.StoneLit,
+			{ mat = "Metal", tag = "decor" }
+		)
+		add(
+			"Cylinder",
+			v(x, depth - 1.6, z),
+			v(15, 2, 15),
+			P.CoralBone,
+			{ mat = "Metal", tag = "decor" }
+		)
+		add("Ball", v(x, depth - 4.4, z), v(4, 4, 4), P.CyanDeep, {
+			mat = "Neon",
+			alpha = 0.4,
+			tag = "accent",
+			emissive = 0.6,
+			cast = false,
+		})
+	end
+end
+
 local function buildStatues()
 	-- Four seated wardens in the aisles: scale and environmental storytelling.
 	local seats = {
@@ -395,6 +495,76 @@ local function buildStatues()
 	end
 end
 
+--[[ Warm/cool rim lighting. This is what makes the architecture read: without
+     sconces the rib arches vanish into the fog and the reef feels flat. ]]
+local function buildSconces()
+	local fixtures: { { x: number, y: number, z: number, warm: boolean } } = {}
+	for index = 0, 12, 2 do
+		local z = -138 + index * 21
+		local warm = index % 4 == 0
+		table.insert(fixtures, { x = -(NAVE_HALF - 8), y = 34, z = z, warm = warm })
+		table.insert(fixtures, { x = NAVE_HALF - 8, y = 34, z = z, warm = warm })
+	end
+	for _, side in { -1, 1 } do
+		for index = 0, 3 do
+			local z = -100 + index * 66
+			table.insert(
+				fixtures,
+				{ x = side * (AISLE_OUTER - 13), y = 26, z = z, warm = index % 2 == 0 }
+			)
+		end
+	end
+
+	local sconceLights: { LightSpec } = {}
+	for _, fixture in fixtures do
+		local color = if fixture.warm then P.Amber else P.CyanDeep
+		-- iron bracket
+		add("Cylinder", v(fixture.x, fixture.y, fixture.z), v(1.1, 5, 1.1), P.CoralBoneDim, {
+			mat = "Metal",
+			tag = "decor",
+			cast = false,
+		})
+		-- the flame itself
+		add("Ball", v(fixture.x, fixture.y + 2.6, fixture.z), v(2.6, 3.4, 2.6), color, {
+			mat = "Neon",
+			alpha = 0.1,
+			tag = "accent",
+			emissive = 1,
+			cast = false,
+		})
+		table.insert(sconceLights, light(v(fixture.x, fixture.y + 2.6, fixture.z), color, 1.7, 62))
+	end
+
+	-- Ember braziers on the nave floor give the eye a warm anchor mid-arena.
+	local braziers = {
+		{ -18, -72 },
+		{ 18, -18 },
+		{ -18, 36 },
+		{ 18, 92 },
+	}
+	for _, spot in braziers do
+		local x, z = spot[1], spot[2]
+		add(
+			"Cylinder",
+			v(x, 3.4, z),
+			v(5.4, 6.8, 5.4),
+			P.CoralBoneDim,
+			{ mat = "Metal", tag = "decor" }
+		)
+		add("Cylinder", v(x, 7.2, z), v(6.8, 1.2, 6.8), P.Rust, { mat = "Metal", tag = "decor" })
+		add("Ball", v(x, 9.4, z), v(3.6, 4.4, 3.6), P.Amber, {
+			mat = "Neon",
+			alpha = 0.08,
+			tag = "accent",
+			emissive = 1,
+			cast = false,
+		})
+		table.insert(sconceLights, light(v(x, 10, z), P.Amber, 2.4, 70))
+	end
+
+	return sconceLights
+end
+
 local function buildCoral(rng: Random.Rng)
 	-- Biomass grows along the walls and the aisle edges, never in the main lane.
 	local function placeSpire(x: number, z: number, scale: number)
@@ -402,7 +572,8 @@ local function buildCoral(rng: Random.Rng)
 		local thickness = rng:range(0.9, 2.6) * scale
 		local baseY = if math.abs(x) > NAVE_HALF then 4 else 0
 		local lean = rng:range(-14, 14)
-		local bone = if rng:nextFloat() < 0.25 then P.Rust else P.CoralBone
+		local roll = rng:nextFloat()
+		local bone = if roll < 0.22 then P.Rust elseif roll < 0.4 then P.StoneLit else P.CoralBone
 		add("Cylinder", v(x, baseY + height / 2, z), v(thickness, height, thickness), bone, {
 			mat = "Slate",
 			rot = v(lean, 0, rng:range(-12, 12)),
@@ -439,26 +610,26 @@ local function buildCoral(rng: Random.Rng)
 	end
 
 	-- Glow pools on the floor: soft cyan light spill for readability.
-	for _ = 1, 46 do
+	for _ = 1, 26 do
 		local side = rng:sign()
 		local x = side * rng:range(NAVE_HALF - 4, AISLE_OUTER - 6)
 		local z = rng:range(-140, 140)
-		local radius = rng:range(2.5, 7)
-		add("Cylinder", v(x, 4.12, z), v(radius * 2, 0.22, radius * 2), P.CyanDeep, {
+		local radius = rng:range(2.5, 5.5)
+		add("Cylinder", v(x, 4.14, z), v(radius * 2, 0.1, radius * 2), P.CyanDeep, {
 			mat = "Neon",
-			alpha = 0.55,
+			alpha = 0.68,
 			tag = "glow",
 			emissive = 0.5,
 			cast = false,
 		})
 	end
-	for _ = 1, 14 do
+	for _ = 1, 10 do
 		local x = rng:range(-NAVE_HALF + 10, NAVE_HALF - 10)
 		local z = rng:range(-150, 150)
-		local radius = rng:range(3, 9)
-		add("Cylinder", v(x, 0.12, z), v(radius * 2, 0.2, radius * 2), P.CyanDeep, {
+		local radius = rng:range(3, 7)
+		add("Cylinder", v(x, 0.14, z), v(radius * 2, 0.1, radius * 2), P.CyanDeep, {
 			mat = "Neon",
-			alpha = 0.6,
+			alpha = 0.7,
 			tag = "glow",
 			emissive = 0.45,
 			cast = false,
@@ -466,7 +637,7 @@ local function buildCoral(rng: Random.Rng)
 	end
 
 	-- Egg clusters: dense little colonies that catch the lantern.
-	for _ = 1, 120 do
+	for _ = 1, 80 do
 		local side = rng:sign()
 		local x = side * rng:range(NAVE_HALF - 6, AISLE_OUTER - 4)
 		local z = rng:range(-146, 146)
@@ -502,9 +673,9 @@ local function buildCoral(rng: Random.Rng)
 	-- Drifting plankton: tiny emissive points that give the fog depth.
 	for _ = 1, 150 do
 		local x = rng:range(-AISLE_OUTER, AISLE_OUTER)
-		local y = rng:range(6, 70)
+		local y = rng:range(16, 74)
 		local z = rng:range(-REEF_HALF_L, REEF_HALF_L)
-		local s = rng:range(0.25, 0.75)
+		local s = rng:range(0.18, 0.5)
 		add("Ball", v(x, y, z), v(s, s, s), if rng:nextFloat() < 0.2 then P.Ember else P.Mint, {
 			mat = "Neon",
 			alpha = rng:range(0.1, 0.5),
@@ -595,7 +766,7 @@ local function buildBeacons(): { BeaconSpec }
 			{ mat = "Metal", tag = "beaconBase" }
 		)
 		-- the lantern core itself (moved/dyed by the server on relight)
-		add("Ball", v(pos.x, baseY + 12, pos.z), v(7.4, 9.4, 7.4), def.accent, {
+		add("Ball", v(pos.x, baseY + 12, pos.z), v(9.4, 12.4, 9.4), def.accent, {
 			mat = "Neon",
 			alpha = 0.15,
 			tag = "beaconCore",
@@ -618,6 +789,22 @@ local function buildBeacons(): { BeaconSpec }
 				}
 			)
 		end
+		-- light pillar: a wayfinding beacon visible through the fog from the gate
+		add("Cylinder", v(pos.x, baseY + 54, pos.z), v(3.2, 96, 3.2), def.accent, {
+			mat = "Neon",
+			alpha = 0.55,
+			tag = "beaconBeam",
+			emissive = 0.8,
+			cast = false,
+		})
+		add("Cylinder", v(pos.x, baseY + 20, pos.z), v(6.4, 26, 6.4), def.accent, {
+			mat = "Neon",
+			alpha = 0.42,
+			tag = "beaconBeam",
+			emissive = 0.9,
+			cast = false,
+		})
+
 		-- ribbed hood
 		for i = 0, 3 do
 			local angle = math.rad(i * 90 + 45)
@@ -693,8 +880,11 @@ local function buildShards(rng: Random.Rng, beacons: { BeaconSpec }): { ShardSpe
 	return shards
 end
 
-local function buildReefLights(beacons: { BeaconSpec }): { LightSpec }
+local function buildReefLights(beacons: { BeaconSpec }, fixtureLights: { LightSpec }): { LightSpec }
 	local lights: { LightSpec } = {}
+	for _, fixture in fixtureLights do
+		table.insert(lights, fixture)
+	end
 	for _, beacon in beacons do
 		table.insert(
 			lights,
@@ -872,6 +1062,158 @@ local function buildHub(): Hub
 		)
 	end
 
+	-- The hub is the first thing a player sees, so it carries the most authored
+	-- furniture in the game: a causeway, standing stones, a chart monument, an
+	-- obelisk and an arch to give the two shops different silhouettes.
+	for index = 0, 4 do
+		local z = 16 + index * 5
+		for _, side in { -1, 1 } do
+			hAdd(
+				"Cylinder",
+				v(side * 9, 6.5, z),
+				v(1.4, 7, 1.4),
+				P.CoralBone,
+				{ mat = "Metal", tag = "decor", cast = false }
+			)
+			hAdd("Ball", v(side * 9, 10.4, z), v(2.1, 2.1, 2.1), P.Amber, {
+				mat = "Neon",
+				tag = "accent",
+				emissive = 1,
+				cast = false,
+			})
+			table.insert(
+				hubLights,
+				light(v(origin.x + side * 9, origin.y + 10.4, origin.z + z), P.Amber, 1.5, 30)
+			)
+		end
+	end
+
+	for index = 0, 11 do
+		local angle = math.rad(index * 30 + 15)
+		local x = math.cos(angle) * 41
+		local z = math.sin(angle) * 41
+		local height = 14 + (index % 3) * 5
+		hAdd("Block", v(x, 3 + height / 2, z), v(5.5, height, 3.2), P.Stone, {
+			mat = "Slate",
+			rot = v(0, math.deg(angle) + 90, 0),
+			tag = "decor",
+		})
+		hAdd(
+			"Block",
+			v(x * 0.97, 3 + height * 0.62, z * 0.97),
+			v(0.8, height * 0.5, 0.6),
+			P.CyanDeep,
+			{
+				mat = "Neon",
+				alpha = 0.3,
+				rot = v(0, math.deg(angle) + 90, 0),
+				tag = "accent",
+				emissive = 0.8,
+				cast = false,
+			}
+		)
+	end
+
+	-- Central monument: a drowned chart of the reef with the three beacons marked.
+	hAdd("Cylinder", v(0, 4.4, 0), v(16, 1.6, 16), P.StoneLit, { mat = "Slate", tag = "floor" })
+	hAdd(
+		"Cylinder",
+		v(0, 6, 0),
+		v(12, 2.4, 12),
+		P.Water,
+		{ mat = "Glass", alpha = 0.55, tag = "glow", cast = false }
+	)
+	type Marker = { x: number, z: number, color: string }
+	local markers: { Marker } = {
+		{ x = -3.5, z = -3, color = P.Cyan },
+		{ x = 3.2, z = 0.5, color = P.Mint },
+		{ x = 0.5, z = 3.4, color = P.Teal },
+	}
+	for _, marker in markers do
+		hAdd("Ball", v(marker.x, 7.4, marker.z), v(1.5, 1.5, 1.5), marker.color, {
+			mat = "Neon",
+			tag = "accent",
+			emissive = 1,
+			cast = false,
+		})
+	end
+	hAdd("Cylinder", v(0, 12, 0), v(2.4, 12, 2.4), P.Stone, { mat = "Slate", tag = "decor" })
+	hAdd(
+		"Ball",
+		v(0, 19, 0),
+		v(4.2, 4.2, 4.2),
+		P.CyanDeep,
+		{ mat = "Neon", alpha = 0.3, tag = "accent", emissive = 1, cast = false }
+	)
+	table.insert(hubLights, light(v(origin.x, origin.y + 22, origin.z), P.Cyan, 2.6, 46))
+
+	-- Obelisk (codex) and arch (ledger): two very different silhouettes.
+	hAdd("Block", v(34, 22, 6), v(7.5, 36, 7.5), P.Stone, { mat = "Slate", tag = "decor" })
+	hAdd("Block", v(34, 40.4, 6), v(4.2, 4, 4.2), P.StoneLit, { mat = "Slate", tag = "decor" })
+	for index = 0, 3 do
+		hAdd(
+			"Block",
+			v(34, 12 + index * 7, 2.6),
+			v(4.4, 1.6, 0.4),
+			P.CyanDeep,
+			{ mat = "Neon", tag = "accent", emissive = 0.9, cast = false }
+		)
+	end
+
+	hAdd("Block", v(-41, 18, 6), v(4.4, 30, 4.4), P.Stone, { mat = "Slate", tag = "decor" })
+	hAdd("Block", v(-27, 18, 6), v(4.4, 30, 4.4), P.Stone, { mat = "Slate", tag = "decor" })
+	hAdd("Block", v(-34, 34.4, 6), v(19, 4.6, 4.6), P.StoneLit, { mat = "Slate", tag = "decor" })
+	hAdd(
+		"Block",
+		v(-34, 30, 6),
+		v(15, 1.2, 1.2),
+		P.Amber,
+		{ mat = "Neon", alpha = 0.15, tag = "accent", emissive = 1, cast = false }
+	)
+
+	-- Tide shelf + distant spires: depth cues for a small island on a big sea.
+	hAdd(
+		"Cylinder",
+		v(0, -46, 0),
+		v(300, 1, 300),
+		P.CyanDeep,
+		{ mat = "Neon", alpha = 0.86, tag = "water", emissive = 0.5, cast = false }
+	)
+	hAdd(
+		"Cylinder",
+		v(0, -47, 0),
+		v(200, 1, 200),
+		P.Teal,
+		{ mat = "Neon", alpha = 0.7, tag = "water", emissive = 0.7, cast = false }
+	)
+
+	for index = 0, 9 do
+		local angle = math.rad(index * 36 + 9)
+		local distance = 170 + (index % 3) * 60
+		local x = math.cos(angle) * distance
+		local z = math.sin(angle) * distance
+		local height = 90 + (index % 4) * 55
+		hAdd(
+			"Cylinder",
+			v(x, -40 + height / 2, z),
+			v(18 + (index % 3) * 8, height, 18 + (index % 3) * 8),
+			P.Stone,
+			{
+				mat = "Slate",
+				rot = v((index % 5) * 3, index * 17, (index % 3) * 4),
+				tag = "decor",
+				cast = false,
+			}
+		)
+		hAdd("Ball", v(x, -40 + height, z), v(5, 5, 5), P.CyanDeep, {
+			mat = "Neon",
+			alpha = 0.5,
+			tag = "accent",
+			emissive = 0.6,
+			cast = false,
+		})
+	end
+
 	-- Water plane beneath the island
 	hAdd(
 		"Block",
@@ -917,6 +1259,9 @@ function Layout.build(seed: number?): World
 	buildOuterWalls()
 	buildStatues()
 	local beacons = buildBeacons()
+	local fixtureLights = buildSconces()
+	buildWayfinding()
+	buildHangingBells()
 	buildCoral(rng)
 	buildWater()
 	buildExitGate()
@@ -925,7 +1270,7 @@ function Layout.build(seed: number?): World
 
 	local reef: Reef = {
 		parts = reefParts,
-		lights = buildReefLights(beacons),
+		lights = buildReefLights(beacons, fixtureLights),
 		bounds = {
 			min = v(-REEF_HALF_W, -4, -REEF_HALF_L),
 			max = v(REEF_HALF_W, 110, REEF_HALF_L),

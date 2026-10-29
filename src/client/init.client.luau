@@ -9,6 +9,7 @@
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -28,6 +29,23 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 ClientNet.start()
+
+-- The game has no health bar and no inventory: hide the default ones so the HUD
+-- owns the screen. Wrapped because CoreGui is not always ready at script start.
+task.spawn(function()
+	for _ = 1, 20 do
+		local ok = pcall(function()
+			StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false)
+			StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
+			StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.EmotesMenu, false)
+			StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, true)
+		end)
+		if ok then
+			return
+		end
+		task.wait(0.25)
+	end
+end)
 
 local hud = Hud.new(playerGui)
 local panels = Panels.new(playerGui)
@@ -279,6 +297,8 @@ task.spawn(function()
 	Controls.setEnabled(Store.get().phase == "dive" and Store.get().inDive)
 	hud:setPhase(Store.get().phase)
 	refreshHud()
+	hud:banner("ECHOWAKE")
+	hud:toast("Rekindle the drowned city.", "info")
 end)
 
 local hudAccumulator = 0

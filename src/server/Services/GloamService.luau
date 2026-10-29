@@ -163,6 +163,12 @@ function GloamService.clear(self: GloamService)
 	self.records = {}
 end
 
+--[[ Clears the population *and* the encounter log, for a fresh dive. ]]
+function GloamService.reset(self: GloamService)
+	self:clear()
+	self.kindsSeen = {}
+end
+
 --[[ Bends nearby agents toward a sound (used by the player's pulse). ]]
 function GloamService.attract(self: GloamService, origin: Vector3, radius: number)
 	for _, record in self.records do

@@ -332,7 +332,7 @@ function Panels.renderLedger(self: Panels)
 		-- level pips
 		local pips = Kit.frame(card, {
 			AnchorPoint = Vector2.new(1, 0),
-			Position = UDim2.new(1, -110, 0, 4),
+			Position = UDim2.new(1, -114, 0, 50),
 			Size = UDim2.fromOffset(math.min(def.maxLevel, 8) * 12, 10),
 			BackgroundTransparency = 1,
 		})

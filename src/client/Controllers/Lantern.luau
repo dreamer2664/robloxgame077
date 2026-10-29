@@ -410,19 +410,19 @@ function Lantern.step(self: Lantern, _dt: number)
 		end
 	end
 
-	-- Camera shake
-	local camera = workspace.CurrentCamera
-	if camera and now < self.shakeUntil then
-		local remaining = (self.shakeUntil - now) / 0.3
-		local strength = self.shakeStrength * math.clamp(remaining, 0, 1)
-		local jitter = Vector3.new(
-			(math.random() - 0.5) * strength,
-			(math.random() - 0.5) * strength,
-			(math.random() - 0.5) * strength
-		)
-		camera.CFrame = camera.CFrame * CFrame.new(jitter)
-	elseif now >= self.shakeUntil then
-		self.shakeStrength = 0
+	-- Camera shake: applied through Humanoid.CameraOffset so it layers on top of
+	-- the default camera controller instead of fighting it for the CFrame.
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		if now < self.shakeUntil then
+			local remaining = (self.shakeUntil - now) / 0.3
+			local strength = self.shakeStrength * math.clamp(remaining, 0, 1)
+			humanoid.CameraOffset =
+				Vector3.new((math.random() - 0.5) * strength, (math.random() - 0.5) * strength, 0)
+		elseif self.shakeStrength > 0 then
+			self.shakeStrength = 0
+			humanoid.CameraOffset = Vector3.new(0, 0, 0)
+		end
 	end
 end
 

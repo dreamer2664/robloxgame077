@@ -414,7 +414,7 @@ function DiveService.beginRun(self: DiveService, player: Player)
 	end
 
 	app.world.exitPrompt.Enabled = false
-	app.gloam:clear()
+	app.gloam:reset()
 
 	self:addDiver(player)
 	self:spawnInitialSwarm()
@@ -756,7 +756,7 @@ function DiveService.maintainSwarm(self: DiveService)
 	local unlit = #self.beaconOrder - self.beaconsLit
 	local target = Config.Gloam.BasePopulation
 		+ (self:countDivers() - 1) * Config.Gloam.PopulationPerPlayer
-	target += unlit * 2
+	target += unlit * Config.Gloam.PopulationPerUnlitBeacon
 	target = math.clamp(target, 4, Config.Gloam.MaxAlive)
 	local current = app.gloam:count()
 	if current < target then
@@ -885,12 +885,24 @@ function DiveService.fixedStep(self: DiveService, dt: number)
 		return aiContext
 	end)
 
+	-- Light is health: hitting zero must end the dive, whatever the source.
+	for player, diver in self.divers do
+		if not diver.out and diver.light <= 0 then
+			self:settle(player, "doused")
+		end
+	end
+
 	local contacts = app.gloam:contacts(targets, now)
 	for _, contact in contacts do
 		local player = Players:GetPlayerByUserId(contact.userId)
 		if player then
 			self:damageLight(player, contact.amount, contact.position)
 		end
+	end
+
+	-- Record which Gloam the player has actually shared the water with.
+	for kind in app.gloam.kindsSeen do
+		self.kindsThisRun[kind] = true
 	end
 
 	-- Ember motes
@@ -986,7 +998,15 @@ end
 -- payouts
 --------------------------------------------------------------------------------
 
-function DiveService.settle(self: DiveService, player: Player, reason: string)
+--[[
+	Ends a player's dive, computes the payout and returns them to the hub.
+
+	IMPORTANT: this runs inside the Heartbeat step for timeout/douse paths, so it
+	must never yield. Persistence and the leaderboard write are deferred to a
+	spawned thread (both hit DataStores, which yield). `deferSave = false` is used
+	by the leave path, where PlayerDataService.release performs the final save.
+]]
+function DiveService.settle(self: DiveService, player: Player, reason: string, deferSave: boolean?)
 	local app = self.app
 	if not app then
 		return
@@ -1029,9 +1049,18 @@ function DiveService.settle(self: DiveService, player: Player, reason: string)
 		for kind in self.kindsThisRun do
 			save.codex[kind] = true
 		end
-		app.data:save(player)
-		app.board:submit(player, save.lifetimeEmbers)
-		self:pushSave(player)
+		local lifetime = save.lifetimeEmbers
+		record.dirty = true
+		local shouldSave = deferSave ~= false
+		if shouldSave then
+			task.spawn(function()
+				app.data:save(player)
+				app.board:submit(player, lifetime)
+				if player.Parent then
+					self:pushSave(player)
+				end
+			end)
+		end
 	end
 
 	app.net:signal(player, Net.Signal.Bank, {
@@ -1127,7 +1156,13 @@ function DiveService.purchaseUpgrade(self: DiveService, player: Player, id: unkn
 	app.data:mutate(player, function()
 		return result.save
 	end)
-	app.data:save(player)
+	local record2 = app.data:get(player)
+	if record2 then
+		record2.dirty = true
+	end
+	task.spawn(function()
+		app.data:save(player)
+	end)
 	local diver = self.divers[player]
 	if diver then
 		applyStats(app, player, diver)
@@ -1152,7 +1187,13 @@ function DiveService.purchaseHue(self: DiveService, player: Player, id: unknown)
 	app.data:mutate(player, function()
 		return nextSave
 	end)
-	app.data:save(player)
+	local record2 = app.data:get(player)
+	if record2 then
+		record2.dirty = true
+	end
+	task.spawn(function()
+		app.data:save(player)
+	end)
 	self:pushSave(player)
 	app.net:signal(player, Net.Signal.Toast, { text = "Lantern recoloured.", tone = "good" })
 end
@@ -1181,7 +1222,9 @@ end
 --[[ Called when a player leaves the server mid-dive. ]]
 function DiveService.handlePlayerRemoving(self: DiveService, player: Player)
 	if self.divers[player] then
-		self:settle(player, "doused")
+		-- No deferral: PlayerDataService.release runs immediately after this and
+		-- performs the final write, so the payout must already be in the record.
+		self:settle(player, "doused", false)
 	end
 end
 

@@ -7,8 +7,8 @@
 	search terms and the review checklist). Playback no-ops on empty ids, so the
 	game is fully playable and nothing silently depends on a missing asset.
 
-	To wire audio: drop an id into this table, e.g.
-		SoundKit.IDS.pulse = "rbxassetid://<verified id>"
+	To wire audio: drop a verified asset id string into this table, e.g.
+		SoundKit.IDS.pulse = "rbxassetid://0" -- replaced with the real id
 ]]
 
 local SoundService = game:GetService("SoundService")

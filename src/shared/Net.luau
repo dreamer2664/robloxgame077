@@ -41,7 +41,6 @@ Net.Signal = {
 	Toast = "toast", -- { text, tone }
 	Save = "save", -- full sanitised save for UI
 	Bank = "bank", -- payout summary
-	Prompt = "prompt", -- { text } contextual prompt for the HUD
 	Flare = "flare", -- { x, y, z, ax, ay, az } flare cone VFX
 	Panel = "panel", -- { name } open a hub panel (ledger / codex)
 }

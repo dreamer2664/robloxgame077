@@ -10,17 +10,17 @@ local Palette = {}
 Palette.Hex = {
 	-- Environment
 	Abyss = "#03060C",
-	Water = "#061420",
-	Stone = "#0E1622",
-	StoneAlt = "#141F2D",
-	StoneLit = "#1B2C3C",
-	CoralBone = "#6E7F91",
-	CoralBoneDim = "#3B4A59",
-	Rust = "#2A1C18",
+	Water = "#0A1C28",
+	Stone = "#1E2B3A",
+	StoneAlt = "#28374A",
+	StoneLit = "#3A4F66",
+	CoralBone = "#9DAEBD",
+	CoralBoneDim = "#4A5A6B",
+	Rust = "#5A3A2A",
 
 	-- Bioluminescence
 	Cyan = "#4BE3D2",
-	CyanDeep = "#12796F",
+	CyanDeep = "#1FB6A6",
 	Teal = "#1FB6C4",
 	Mint = "#9BF6D8",
 
