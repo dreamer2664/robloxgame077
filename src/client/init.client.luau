@@ -215,6 +215,9 @@ hud:setActions({
 	sprint = function(on: boolean)
 		Controls.setSprint(on)
 	end,
+	abandon = function()
+		ClientNet.fire(Net.Intent.Leave)
+	end,
 })
 
 UserInputService.InputBegan:Connect(function(input, processed)

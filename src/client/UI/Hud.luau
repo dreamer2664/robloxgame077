@@ -50,6 +50,7 @@ export type Hud = typeof(setmetatable(
 		emberLabel: TextLabel,
 		toasts: Frame,
 		crosshair: Frame,
+		abandonButton: TextButton,
 		vignette: Frame,
 		damageFlash: Frame,
 		bannerLabel: TextLabel,
@@ -114,6 +115,7 @@ function Hud.new(parent: Instance): Hud
 	self:buildFooter()
 	self:buildMobile()
 	self:buildPayout()
+	self:buildAbandon()
 
 	return self
 end
@@ -511,6 +513,7 @@ export type HudActions = {
 	pulse: () -> (),
 	flare: () -> (),
 	sprint: (on: boolean) -> (),
+	abandon: () -> (),
 }
 
 function Hud.setActions(self: Hud, actions: HudActions)
@@ -584,6 +587,26 @@ function Hud.buildMobile(self: Hud)
 	end)
 	self.mobileBar = bar
 	bar.Visible = UserInputService.TouchEnabled
+end
+
+--[[ Leaving on purpose is a real strategy (bank what you carry). It needs a
+     visible, always-reachable control - especially on touch, where there is no
+     Escape key. ]]
+function Hud.buildAbandon(self: Hud)
+	local button = Kit.button(self.root, "ABANDON DIVE", {
+		Name = "Abandon",
+		Position = UDim2.fromOffset(22, 16),
+		Size = UDim2.fromOffset(132, 30),
+		TextSize = 11,
+		BackgroundTransparency = 0.3,
+		TextColor3 = Theme.Color.textDim,
+		ZIndex = 4,
+	})
+	button.Visible = false
+	button.Activated:Connect(function()
+		self.actions.abandon()
+	end)
+	self.abandonButton = button
 end
 
 function Hud.buildPayout(self: Hud)
@@ -744,6 +767,7 @@ end
 function Hud.update(self: Hud, state: any, cooldowns: { [string]: number }, sprinting: boolean)
 	local inDive = state.phase == "dive" and state.inDive
 	self.runBar.Visible = inDive
+	self.abandonButton.Visible = inDive
 	self.crosshair.Visible = inDive
 	self.mobileBar.Visible = UserInputService.TouchEnabled and inDive
 

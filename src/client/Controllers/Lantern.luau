@@ -303,25 +303,32 @@ end
 --------------------------------------------------------------------------------
 
 --[[ Gloam are nearly invisible until something reveals them. ]]
+--[[ Hides Gloam until something reveals them. Runs on its own thread: the folder
+     does not exist until the server starts GloamService, and blocking the client
+     bootstrap on WaitForChild would delay signal wiring (and lose the first
+     phase/light updates). ]]
 function Lantern.watchGloam(_self: Lantern)
-	local gloamFolder = workspace:WaitForChild("Gloam", 15)
-	if not gloamFolder then
-		return
-	end
-	local function hide(instance: Instance)
-		if instance:IsA("BasePart") then
-			instance.LocalTransparencyModifier = 0.94
+	task.spawn(function()
+		local gloamFolder = workspace:WaitForChild("Gloam", 30)
+		if not gloamFolder then
+			warn("[ECHOWAKE] Gloam folder never appeared; enemy stealth disabled")
+			return
 		end
-		instance.DescendantAdded:Connect(function(child)
-			if child:IsA("BasePart") then
-				child.LocalTransparencyModifier = 0.94
+		local function hide(instance: Instance)
+			if instance:IsA("BasePart") then
+				instance.LocalTransparencyModifier = 0.94
 			end
-		end)
-	end
-	for _, child in gloamFolder:GetChildren() do
-		hide(child)
-	end
-	gloamFolder.ChildAdded:Connect(hide)
+			instance.DescendantAdded:Connect(function(child)
+				if child:IsA("BasePart") then
+					child.LocalTransparencyModifier = 0.94
+				end
+			end)
+		end
+		for _, child in gloamFolder:GetChildren() do
+			hide(child)
+		end
+		gloamFolder.ChildAdded:Connect(hide)
+	end)
 end
 
 function Lantern.reveal(self: Lantern, ids: { number }, duration: number)
